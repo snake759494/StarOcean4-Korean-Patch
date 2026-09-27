@@ -1,0 +1,20 @@
+[
+  {
+    "payload_id": "eafc1611adf6a1a4ac0cbcb3eb51479a4c2823e42c8307a6dd1414555dce9d4a",
+    "reason": "Difficulty description panels remain absent; first opening caption is Korean, but most opening subtitles are missing.",
+    "source": "User runtime failure report",
+    "build_directory": "build"
+  },
+  {
+    "payload_id": "7047e75cfe0d461ff446b8c28093e08060acb9cbfe6bb8eb7493ae96a1ede1e0",
+    "reason": "User screenshots confirm difficulty description panel missing after rollback.",
+    "source": "User runtime failure report",
+    "build_directory": "build_verified_426"
+  },
+  {
+    "payload_id": "83d3ae437670c474cb4c38c2e5435c8304ce7c2d9b9bd11e5c9b4971fb545490",
+    "reason": "User reported missing difficulty descriptions and corrupted/missing opening subtitles.",
+    "source": "User runtime failure report",
+    "build_directory": "build_failed_5381"
+  }
+]
