@@ -51,3 +51,4 @@ tools/*.exe
 README_KO.md
 RECOVERY_KO.md
 localization/DIAGNOSIS_CURRENT.md
+release/out/
