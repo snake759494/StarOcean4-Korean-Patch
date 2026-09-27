@@ -15,7 +15,7 @@ Steam판 **STAR OCEAN - THE LAST HOPE - 4K & Full HD Remaster** (App 609150)용 
 
 ## 설치
 1. 게임을 종료합니다. (처음 설치라면 Steam에서 "게임 파일 무결성 확인"을 한 번 해 두는 것을 권장합니다.)
-2. [Releases](../../releases)에서 `StarOcean4_KoreanPatch.exe`를 받아 실행합니다.
+2. [Releases](../../releases)에서 `StarOcean4_KO_v1.0.zip`을 받아 압축을 풀고 `StarOcean4_KO_v1.0.exe`를 실행합니다.
 3. 게임 폴더를 자동으로 찾습니다. 다른 위치에 설치했다면 경로를 입력하세요.
 4. 완료 후 게임 설정에서 **텍스트 언어를 일본어**로 선택합니다.
 
