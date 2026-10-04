@@ -1,9 +1,9 @@
 """Skill names authored against the six rendered Japanese source sheets."""
-_names = '''대장장이
+_names = '''단조
 요리
-연금술
+연금
 예술
-기계공학
+기계
 세공
 조합
 합성

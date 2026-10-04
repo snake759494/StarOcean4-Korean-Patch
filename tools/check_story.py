@@ -35,6 +35,7 @@ def check(ref):
         if ids != set(K):
             problems.append(f"{r['key']}: missing {sorted(ids-set(K))} extra {sorted(set(K)-ids)}")
     for mid, s in K.items():
+        if s == '': problems.append(f'{mid}: empty message stalls the event; keep at least a space')
         if '{RAW:9080' in s: problems.append(f'{mid}: ruby token (9080) holds Japanese glyph indices; drop it')
         s = re.sub(r'\{NAME:\d+:([^{}]*)\}', r'\1', s); s = re.sub(r'\{RAW:[0-9a-fA-F]+\}', '', s)
         for line in s.replace('{PAGE}', '\n').split('\n'):

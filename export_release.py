@@ -37,8 +37,11 @@ def main():
     for (arc, off), p in sorted(new.items()):
         P = br.PACKSA[arc][p['pack']]; data = (br.OUT/p['file']).read_bytes()
         slot = (P['tot'] + 0x7ff) & ~0x7ff
-        with br.ARCS[arc].open('rb') as f:
-            f.seek(off); old = f.read(slot)
+        import pristine_cache
+        old = pristine_cache.read(arc, off, slot)
+        if old is None:
+            with br.ARCS[arc].open('rb') as f:
+                f.seek(off); old = f.read(slot)
         if len(data) <= slot:
             data = data + bytes(slot - len(data))
             items.append({'mode': 'inplace', 'arc': arc, 'offset': off, 'length': slot,

@@ -48,6 +48,15 @@ def restore():
     with ARCS[1].open('r+b') as f:
         f.truncate(size1); f.flush(); os.fsync(f.fileno())
 
+def orig_pack(arc, pi):
+    """original pack bytes: pristine cache first, else the game file"""
+    import pristine_cache
+    p = PACKSA[arc][pi]
+    b = pristine_cache.read(arc, p['off'], p['tot'])
+    if b is not None: return b
+    with ARCS[arc].open('rb') as f:
+        f.seek(p['off']); return f.read(p['tot'])
+
 def read_original(pi, ei, arc=0):
     """Original compressed + decoded bytes from the pristine layout."""
     p = PACKSA[arc][pi]; e = p['e'][ei]
@@ -56,8 +65,13 @@ def read_original(pi, ei, arc=0):
         raw = backup.read_bytes(); dec = decode_native_slz(raw)[0]
         assert len(dec) == e[3]; return raw, dec
     ends = sorted([r[4] for r in p['e'] if r[4] > e[4]] + [p['tot']])
-    with ARCS[arc].open('rb') as f:
-        f.seek(p['off'] + e[4]); raw = f.read(ends[0] - e[4])
+    import pristine_cache
+    cached = pristine_cache.read(arc, p['off'], p['tot'])
+    if cached is not None:
+        raw = cached[e[4]:ends[0]]
+    else:
+        with ARCS[arc].open('rb') as f:
+            f.seek(p['off'] + e[4]); raw = f.read(ends[0] - e[4])
     dec = decode_native_slz(raw)[0] if raw[3] in (1, 3) else slz_decompress(raw)[0]
     assert len(dec) == e[3], (arc, pi, ei)
     return raw, dec
@@ -212,6 +226,8 @@ def build():
         if r['id'] == 58 and r['language'] == 'ja': scenes.setdefault(r['ref'], []).append(r)
     for ref, tr in story_translations().items():
         if ref not in scenes: raise SystemExit(f'scene {ref}: no JP resource')
+        empty = [m for m, s in tr.items() if s == '']   # a 0-length message stalls the event (issue #1)
+        if empty: raise SystemExit(f'scene {ref}: empty messages {empty} (keep at least a space)')
         for r in scenes[ref]:
             arc = int(r['archive']); pi, ei = r['pack'], r['entry']
             _, data = read_original(pi, ei, arc)
@@ -241,8 +257,7 @@ def build():
     packs = []; skipped_packs = []
     for (arc, pi), rep in sorted(bypack.items()):
         p = PACKSA[arc][pi]
-        with ARCS[arc].open('rb') as f:
-            f.seek(p['off']); orig = f.read(p['tot'])
+        orig = orig_pack(arc, pi)
         new = build_pack(orig, rep)
         slot = (p['tot'] + 0x7ff) & ~0x7ff
         if len(new) > slot and not can_grow(arc, p['off'], slot):   # packs inside blocks must fit their original slot
