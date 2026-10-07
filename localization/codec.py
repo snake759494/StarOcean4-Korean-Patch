@@ -65,6 +65,12 @@ def decode(raw,local=False):
         elif b==0x94 and raw[i+1]==0x80: count=4   # 2-byte arg
         elif b==0x84 and raw[i+1]==0x80: count=3
         elif b==0xac and raw[i+1]==0x80: count=3
+        elif b in (0xae,0xaf,0xb1) and raw[i+1]==0x80: count=3   # arena branch codes, 1-byte arg
+        elif b in (0xb0,0xb2,0x91) and raw[i+1]==0x80: count=2   # branch end / ruby end
+        elif b==0x90 and raw[i+1]==0x80 and raw[i+2:i+4]==b'\x90\x80':
+            # ruby: 9080 9080 <reading glyphs> 00 <base glyphs> 9180 ; keep the reading's 00 terminator
+            end=raw.find(b'\0',i+4)
+            out.append('{RAW:90809080}'+decode(raw[i+4:end],local)+'{RAW:00}'); i=end+1; continue
         elif b==0x93 and raw[i+1]==0x80:
             end=raw.find(b'\0',i+4)
             count=(end+1-i) if end>=0 else len(raw)-i

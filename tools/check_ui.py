@@ -11,7 +11,10 @@ ROOT = Path(__file__).resolve().parents[1]
 UI = ROOT/'localization/ui'
 JP = re.compile(r'[぀-ヿ一-鿿々]')
 
+RUBY = re.compile(r'\{RAW:90809080\}.*?\{RAW:00\}(.*?)\{RAW:9180\}')
+
 def ctrl(s):
+    s = RUBY.sub(r'\1', s)   # ruby (furigana) is dropped in Korean: only its base text counts
     return [t for t in re.findall(r'\{RAW:([0-9a-fA-F]+)\}', s) if not t.lower().startswith('9380')]
 
 def names(s):
@@ -28,6 +31,8 @@ def main(i):
         if ctrl(v['ja']) != ctrl(t): bad.append(f'{u}: control tokens differ {ctrl(v["ja"])} vs {ctrl(t)}')
         if names(v['ja']) != len(re.findall(r'\{NAME:\d+:[^{}]*\}', t)): bad.append(f'{u}: name tokens differ')
         if v['ja'].count('{PAGE}') != t.count('{PAGE}'): bad.append(f'{u}: {{PAGE}} count differs')
+        if '\\n' in t: bad.append(f'{u}: literal backslash-n (shows as text in game)')
+        if re.search(r'\{RAW:9080', t): bad.append(f'{u}: ruby control left in Korean')
         if JP.search(re.sub(r'\{[^{}]*\}', '', t)): bad.append(f'{u}: Japanese left')
     extra = set(ko) - set(src)
     if extra: bad.append(f'extra ids: {sorted(extra)[:10]}')

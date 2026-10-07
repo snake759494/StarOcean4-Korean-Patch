@@ -1,4 +1,4 @@
-"""STAR OCEAN - THE LAST HOPE 4K & Full HD Remaster  한글 패치 적용기
+﻿"""STAR OCEAN - THE LAST HOPE 4K & Full HD Remaster  한글 패치 적용기
 
 사용법: 게임을 종료한 뒤 이 프로그램을 실행하고 게임 폴더를 확인/입력합니다.
 원본 복구: Steam 라이브러리 > 게임 속성 > 설치된 파일 > "게임 파일 무결성 확인".
@@ -12,13 +12,52 @@ XDELTA = HERE/'xdelta3.exe'
 DEFAULT = Path(r'C:\Program Files (x86)\Steam\steamapps\common\STAR OCEAN - THE LAST HOPE - 4K & Full HD Remaster')
 sha = lambda b: hashlib.sha256(b).hexdigest()
 
+APPID = '609150'
+
+def steam_roots():
+    """Steam install folders from the registry (current user first, then machine-wide)."""
+    import winreg
+    out = []
+    for hive, key, val in ((winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam', 'SteamPath'),
+                           (winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\WOW6432Node\Valve\Steam', 'InstallPath'),
+                           (winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Valve\Steam', 'InstallPath')):
+        try:
+            with winreg.OpenKey(hive, key) as k: out.append(Path(winreg.QueryValueEx(k, val)[0]))
+        except OSError: pass
+    return out
+
+def find_game():
+    """Locate the game through Steam's library list (libraryfolders.vdf) and the app manifest."""
+    import re
+    libs = []
+    for root in steam_roots():
+        libs.append(root)
+        vdf = root/'steamapps'/'libraryfolders.vdf'
+        try: text = vdf.read_text(encoding='utf-8', errors='ignore')
+        except OSError: continue
+        libs += [Path(p.replace('\\\\', '\\')) for p in re.findall(r'"path"\s+"([^"]+)"', text)]
+    for lib in dict.fromkeys(libs):
+        acf = lib/'steamapps'/f'appmanifest_{APPID}.acf'
+        try: text = acf.read_text(encoding='utf-8', errors='ignore')
+        except OSError: continue
+        m = re.search(r'"installdir"\s+"([^"]+)"', text)
+        if m and (lib/'steamapps'/'common'/m.group(1)/'0000.bin').exists():
+            return lib/'steamapps'/'common'/m.group(1)
+    return DEFAULT if (DEFAULT/'0000.bin').exists() else None
+
 def ask_dir():
-    d = DEFAULT
-    if len(sys.argv) > 1: d = Path(sys.argv[1])
-    while not (d/'0000.bin').exists():
-        s = input('게임 폴더 경로를 입력하세요 (0000.bin 이 있는 폴더): ').strip().strip('"')
+    if len(sys.argv) > 1 and (Path(sys.argv[1])/'0000.bin').exists(): return Path(sys.argv[1])
+    found = find_game()
+    while True:
+        if found:
+            print(f'게임 폴더: {found}')
+            s = input('Enter = 이 폴더에 적용 / 다른 폴더라면 경로 입력: ').strip().strip('"')
+            if not s: return found
+        else:
+            s = input('게임 폴더 경로를 입력하세요 (0000.bin 이 있는 폴더): ').strip().strip('"')
         d = Path(s)
-    return d
+        if (d/'0000.bin').exists(): return d
+        print('그 폴더에 0000.bin 이 없습니다.')
 
 def running():
     out = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq StarOceanTheLastHope.exe', '/NH'], capture_output=True).stdout
@@ -76,4 +115,6 @@ if __name__ == '__main__':
         if e.code: print('\n' + str(e.code))
     except Exception as e:
         print('\n오류:', e)
-    input('\n엔터를 누르면 종료합니다.')
+    try: input('\n엔터를 누르면 종료합니다.')
+    except EOFError: pass
+
